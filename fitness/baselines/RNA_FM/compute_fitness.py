@@ -15,7 +15,8 @@ def create_parser():
     parser.add_argument("--scoring-strategy", type=str, default="masked-marginals", choices=["wt-marginals", "masked-marginals"], help="Scoring strategy")
     return parser
 
-def label_row_wt(row, full_sequence, full_token_probs, alphabet, offset_idx, assay_name, model, max_len=1024): # scoring with wt-marginals strategy
+def label_row_wt(row, full_sequence, full_token_probs, alphabet, offset_idx, assay_name, model, max_len=1024): 
+    # scoring with wt-marginals strategy
     score = 0
     seq_len = len(full_sequence)
     device = next(model.parameters()).device

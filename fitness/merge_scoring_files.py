@@ -36,9 +36,13 @@ def combine_csv_data(processed_folder, model_predictions_folder, output_folder, 
 
             save = True
             for model_name in model_list:
-                model_path = os.path.join(model_predictions_folder, model_name, csv_file)
+                model_path = os.path.join(model_predictions_folder, f'{model_name}_results', csv_file)
                 if os.path.exists(model_path):
                     model_df = pd.read_csv(model_path)
+
+                    # import pdb
+                    # pdb.set_trace()
+
                     model_mutation_col = get_mutation_column(model_df)
                     score_col = score_cols_dict[model_name] #model_df.columns[-1]  # Assume the last column is the score
                     model_df = model_df[[model_mutation_col, score_col]]
@@ -75,22 +79,19 @@ def main():
     if args.assays_with_MSAs_only:
         model_list = ['PSSM', 'EVmutation']
     else:
-        model_list = ['evo1','evo1.5','evo2','GenSLM_pll', 'GenSLM_mm','NT_mm','NT_pll','rinalmo','RNAErnie','RNA-FM_wt','RNA-FM_masked']
+        model_list = ['evo1','evo1.5','evo2','GenSLM', 'NT','rinalmo','RNAErnie','RNA-FM',  'aido_rna_1b600m-wt-marginals', 'aido_rna_1b600m_cds-wt-marginals']
     
     score_cols_dict = {
         'evo1': 'evo_1_131k_base_score',
         'evo1.5': 'evo_1.5_8k_base_score',
         'evo2': 'evo2_7b_score',
-        'GenSLM_pll': 'logit_scores',
-        'GenSLM_mm': 'logit_scores',
-        'NT_mm': 'kmer_pseudo_LL',
-        'NT_pll': 'avg_pseudo_LL',
-        'RNA-FM_wt': 'RNA_FM_scores',
-        'RNA-FM_masked': 'RNA_FM_score',
+        'GenSLM': 'logit_scores',
+        'NT': 'kmer_pseudo_LL',
+        'RNA-FM': 'RNA_FM_scores',
         'rinalmo': 'logit_scores',
         'RNAErnie': 'Mutation_Scores',
-        'PSSM': 'prediction_independent',
-        'EVmutation': 'prediction_epistatic'
+        'aido_rna_1b600m-wt-marginals': 'RNA_FM_scores',
+        'aido_rna_1b600m_cds-wt-marginals': 'logit_scores'
     }
 
     combine_csv_data(args.processed_folder, args.model_predictions_folder, args.output_folder, model_list, score_cols_dict)

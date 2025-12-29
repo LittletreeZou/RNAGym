@@ -1,6 +1,12 @@
+"""Adapted from RiNALMo folder
+Note that AIDO.RNA was pretrained with T instead of U, take care of the base.
+Will add special tokens at the begining and the end the sequence
+Mask token id: 1
+"""
+
 import torch
 import pandas as pd
-from rinalmo.pretrained import get_pretrained_model
+from modelgenerator.tasks import MLM
 import os
 import argparse
 from scipy import stats
@@ -8,14 +14,14 @@ import numpy as np
 
 def get_sequences(wt_sequence, df):
     def apply_mutation(sequence, mutation):
-        sequence = sequence.replace('T', 'U')
-        possible_bases = ['A', 'U', 'C', 'G', 'N', '']
+        sequence = sequence.replace('U', 'T')
+        possible_bases = ['A', 'T', 'C', 'G', 'N', '']
         mutation = mutation.replace(' ', '')
         pos = int(mutation[1:-1]) - 1
         new_base = mutation[-1]
         old_base = mutation[0]
-        old_base = 'U' if old_base == 'T' else old_base
-        new_base = 'U' if new_base == 'T' else new_base
+        old_base = 'T' if old_base == 'U' else old_base
+        new_base = 'T' if new_base == 'U' else new_base
 
         assert old_base in possible_bases, mutation
         assert new_base in possible_bases, mutation
@@ -45,33 +51,33 @@ def get_sequences(wt_sequence, df):
     
     return df
 
-def apply_masked_marginal_scoring(wt_sequence, mutated_sequence, positions, model, alphabet, device):
+def apply_masked_marginal_scoring(wt_sequence, mutated_sequence, positions, model, device):
     
-    tokens = torch.tensor(alphabet.batch_tokenize([mutated_sequence]), dtype=torch.int64).to(device)
+    mask_token = model.backbone.tokenizer.mask_token
+    mask_idx = model.backbone.tokenizer.token_to_id(mask_token)
+
     total_score = 0
-    possible_bases = ['A', 'U', 'C', 'G']
+    possible_bases = ['A', 'T', 'C', 'G']
 
     for pos in positions:
         
-        masked_tokens = tokens.clone()
-        masked_tokens[0, pos + 1] = alphabet.mask_idx 
+        input = model.transform({"sequences": [mutated_sequence]})
+        input['input_ids'][0, pos+1] = mask_idx   # +1 for [BOS]
         
-        with torch.no_grad(), torch.cuda.amp.autocast():
-            
-            results = model(masked_tokens)
+        with torch.no_grad():
+            token_logits = model(input)   # (1, 1+seq_len+1, 16), TODO: DON'T USE FP16
         
         # Calculate log probabilities
-        token_logits = results["logits"]
         token_probs = torch.nn.functional.log_softmax(token_logits, dim=-1)
         
         # Get log probability of the mutated base at the position
-        mut_encoded = alphabet.get_idx(mutated_sequence[pos])
+        mut_encoded = model.backbone.tokenizer.token_to_id(mutated_sequence[pos])
         log_prob_mut = token_probs[0, pos + 1, mut_encoded].item()
     
         #remove N's from WT sequence 
         wt_sequence = wt_sequence.replace('N', '')
         
-        wt_encoded = alphabet.get_idx(wt_sequence[pos])
+        wt_encoded = model.backbone.tokenizer.token_to_id(wt_sequence[pos])
         log_prob_wt = token_probs[0, pos + 1, wt_encoded].item()
         
         # Calculate the difference and add to the total score
@@ -82,30 +88,33 @@ def apply_masked_marginal_scoring(wt_sequence, mutated_sequence, positions, mode
 def extract_positions(mutation, offset=1):
     positions = []
     for mut in mutation.split(','):
-        pos = int(mut[1:-1]) - offset
+        pos = int(mut.strip()[1:-1]) - offset
         positions.append(pos)
     return positions
 
-def process_single_row(row, model, alphabet, device, base_dir,results_dir, score_column):
+def process_single_row(row, model, device, base_dir, results_dir, score_column):
     dataset = row['DMS_ID']
     if 'snoRNA' in dataset:
         return
     df_path = os.path.join(base_dir, f'{dataset}.csv')
     df = pd.read_csv(df_path)
     df.columns = df.columns.str.lower()
-    df.dropna(inplace=True)
+    df = df.dropna(subset=['mutant', "dms_score", "sequence"])
     df = df.loc[:, ~df.columns.duplicated()]
-    wt_seq = row['RAW_CONSTRUCT_SEQ'].upper()
+    print(f"Number of samples: {len(df)}")
+
+    wt_seq = row['RAW_CONSTRUCT_SEQ'].upper().replace("U", "T")
     sequences = get_sequences(wt_seq, df)
 
     logit_scores = []
-    for _, seq in sequences.iterrows():
+    for i, seq in sequences.iterrows():
         mutation_column = 'mutant' if 'mutant' in sequences.columns else 'mutation' if 'mutation' in sequences.columns else 'mutations' if 'mutations' in sequences.columns else None
         positions = extract_positions(seq[mutation_column])
-        logits = apply_masked_marginal_scoring(wt_seq,seq['mutated_sequence'], positions, model, alphabet, device)
+        logits = apply_masked_marginal_scoring(wt_seq,seq['mutated_sequence'], positions, model, device)
         logit_scores.append(logits)
-
+        
     sequences[score_column] = logit_scores
+    sequences['mutated_sequence'] = sequences['mutated_sequence'].apply(lambda x: x.replace("T", "U"))
     output_file = os.path.join(results_dir, f"{dataset}.csv")
     sequences.to_csv(output_file, index=False)
 
@@ -113,12 +122,13 @@ def process_single_row(row, model, alphabet, device, base_dir,results_dir, score
 def main(args):
     
     DEVICE = "cuda:0"
-    model, alphabet = get_pretrained_model(model_name="giga-v1")
+    
+    model = MLM.from_config({"model.backbone": args.model_name})
     model = model.to(device=DEVICE)
     model.eval()
 
     base_dir = '/lustre/scratch/shared-folders/bio_project/shuxian/gbft/mg/rna_202507/RNAGym/fitness_prediction/processed_DMS_files'
-    results_dir = '/lustre/scratch/shared-folders/bio_project/shuxian/gbft/mg/rna_202507/RNAGym/fitness_prediction/model_predictions/rinalmo_results'
+    results_dir = '/lustre/scratch/shared-folders/bio_project/shuxian/gbft/mg/rna_202507/RNAGym/fitness_prediction/model_predictions/aidorna-1.6b_results'
     score_column = 'logit_scores'
     wt_seqs = pd.read_csv(args.reference_sheet, encoding='latin-1')
     wt_seqs = wt_seqs.rename(columns={"ï»¿DMS_ID": "DMS_ID"})
@@ -132,11 +142,12 @@ def main(args):
     row = wt_seqs.iloc[args.task_id]
     print(row.DMS_ID)
 
-    process_single_row(row, model, alphabet, DEVICE, base_dir,results_dir, score_column)
+    process_single_row(row, model, DEVICE, base_dir,results_dir, score_column)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--reference_sheet', type=str, required=True)
     parser.add_argument('--task_id', type=int, required=True)
+    parser.add_argument('--model_name', type=str, default="aido_rna_1b600m")
     args = parser.parse_args()
     main(args)

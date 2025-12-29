@@ -402,8 +402,11 @@ def calculate_combined_averages_with_se(wt_seqs: pd.DataFrame, types: List[str],
 
 def main(args):
     wt_seqs = pd.read_csv(args.reference_file)
-    model_list = ['evo1','evo1.5','evo2','GenSLM_pll', 'GenSLM_mm','NT_mm','NT_pll','rinalmo','RNAErnie','RNA-FM_wt','RNA-FM_masked']
-    score_columns = [model+str("_score") for model in model_list]
+    # model_list = ['evo1','evo1.5','evo2','GenSLM_pll', 'GenSLM_mm','NT_mm','NT_pll','rinalmo','RNAErnie','RNA-FM_wt','RNA-FM_masked']
+    # score_columns = [model+str("_score") for model in model_list]
+    model_list = ['aidorna-1.6b']
+    score_columns = ['logit_scores']
+    
     wt_seqs = analyze_datasets(wt_seqs, args.combined_dir, score_columns)
     types = ['mRNA-splicing', 'mRNA-coding', 'tRNA', 'Aptamer', 'Ribozyme']
     
