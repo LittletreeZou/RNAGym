@@ -47,7 +47,7 @@ SELF_CONTACT_MIN_NEIGHBOR_DIST = 6  # Min. residue separation for self-contacts
 COVERAGE_RADIUS = 4.5  # Radius used to determine polymer coverage
 
 # Protein/RNA family HMM/CM databases
-RFAM_DIR = "/N/project/alab_rbp/tmp/Rfam-15.0"
+RFAM_DIR = "/path/to/Rfam-15.0"
 RFAM_CM = f"{RFAM_DIR}/Rfam.cm"
 RFAM_SEED = f"{RFAM_DIR}/Rfam.utf8.seed"
 RFAM_FULL_ALIGNMENT = f"{RFAM_DIR}/alignments/{{accession}}.sto"
@@ -94,7 +94,7 @@ TOP_N = 3  # The top # of sequence clusters to select from each Rfam
 MIN_L = RNA_MIN_NT * 2
 MAX_N = 2000  # Multimers up to this many AA/NA residues will be considered
 MONOMER_CSV = Path("monomer.csv").resolve()
-MULTIMER_CSV = Path("multimer.csv").resolve()
+MULTIMER_CSV = Path("complex.csv").resolve()
 MONOMER_ANALYZED_CSV = Path("out/monomer.analyzed.csv").resolve()
 MULTIMER_ANALYZED_CSV = Path("out/multimer.analyzed.csv").resolve()
 
