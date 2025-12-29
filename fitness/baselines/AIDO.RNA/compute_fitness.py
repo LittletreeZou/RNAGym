@@ -1,9 +1,5 @@
-"""
-Adapted from RNA-FM folder
-"""
-import os
 import torch
-import copy
+import os
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
@@ -113,8 +109,8 @@ def compute_scores_wt(model, reference, args):
         name = row['DMS_ID']
 
         # Avoid repeated computation
-        # if os.path.exists(f"{args.output_directory}/{name}.csv"):
-        #     continue
+        if os.path.exists(f"{args.output_directory}/{name}.csv"):
+            continue
 
         wt_rna = row['RAW_CONSTRUCT_SEQ'].upper().replace('U', 'T')
         wt_rna = clean_sequence(wt_rna, name)
@@ -331,7 +327,7 @@ def create_parser():
 
 def main(args):
 
-    DEVICE = "cuda:0"
+    DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
     
     model = MLM.from_config({"model.backbone": args.model_name})
     model = model.to(device=DEVICE)
@@ -346,7 +342,7 @@ def main(args):
         row = reference.iloc[args.dms_idx]
         print(row['DMS_ID'])
         compute_scores_masked_multiple(model, row, args)
-    
+
 
 if __name__ == "__main__":
     parser = create_parser()

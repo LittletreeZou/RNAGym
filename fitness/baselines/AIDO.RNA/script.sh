@@ -1,7 +1,7 @@
 echo ">>> RNAGym zeroshot fitness prediction >>>"
 
 MODEL=aido_rna_650m_cds  #aido_rna_1b600m_cds
-METHOD=wt-marginals #masked-marginals
+METHOD=masked-marginals
 
 for dms_idx in {0..69}
 do
