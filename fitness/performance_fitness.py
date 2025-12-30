@@ -549,6 +549,10 @@ def main(args):
         "rinalmo",
         "RNAErnie",
         "RNA-FM",
+        "aido_rna_1b600m_cds-wt-marginals",
+        "aido_rna_1b600m-wt-marginals",
+        "aido_rna_650m_cds-wt-marginals",
+        "aido_rna_650m-wt-marginals",
     ]
     score_columns = [model + str("_score") for model in model_list]
     wt_seqs = analyze_datasets(wt_seqs, args.combined_dir, score_columns)

@@ -131,6 +131,10 @@ def main():
             "rinalmo",
             "RNAErnie",
             "RNA-FM",
+            "aido_rna_1b600m_cds-wt-marginals",
+            "aido_rna_1b600m-wt-marginals",
+            "aido_rna_650m_cds-wt-marginals",
+            "aido_rna_650m-wt-marginals",
         ]
 
     score_cols_dict = {
@@ -144,6 +148,10 @@ def main():
         "RNAErnie": "Mutation_Scores",
         "PSSM": "prediction_independent",
         "EVmutation": "prediction_epistatic",
+        "aido_rna_1b600m_cds-wt-marginals": "logit_scores",
+        "aido_rna_1b600m-wt-marginals": "logit_scores",
+        "aido_rna_650m_cds-wt-marginals": "logit_scores",
+        "aido_rna_650m-wt-marginals": "logit_scores",
     }
 
     combine_csv_data(
