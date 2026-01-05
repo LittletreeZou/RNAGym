@@ -118,7 +118,7 @@ def compute_scores_wt(model, reference, args):
         seq_len = len(wt_rna)
 
         try:
-            if seq_len + 2 <= 1024:
+            if seq_len + 2 <= args.max_seq_len:
                 # Full sequence fits
                 input = model.transform({"sequences": [wt_rna]})
                 with torch.no_grad():
@@ -166,7 +166,7 @@ def compute_scores_wt(model, reference, args):
                         offset_idx=1,
                         assay_name=name,
                         model=model,
-                        max_len=1024
+                        max_len=args.max_seq_len,
                     )
                     scores.append(score)
                 except Exception as mutation_error:
@@ -194,7 +194,7 @@ def compute_scores_wt(model, reference, args):
 
 
 
-def compute_scores_masked_multiple(model, row, args, batch_size=64, max_len=1024): 
+def compute_scores_masked_multiple(model, row, args, batch_size=64): 
     """
     scoring with masked-marginals strategy
 
@@ -202,6 +202,7 @@ def compute_scores_masked_multiple(model, row, args, batch_size=64, max_len=1024
         row: row in reference sheet
     """
     mask_token = model.backbone.tokenizer.token_to_id(model.backbone.tokenizer.mask_token)
+    max_len = args.max_seq_len
 
     name = row['DMS_ID']
     wt_rna = row['RAW_CONSTRUCT_SEQ'].upper().replace('U', 'T')
@@ -322,6 +323,7 @@ def create_parser():
     parser.add_argument("--output_directory", type=str, help="Directory to save scored fitness files")
     parser.add_argument("--scoring-strategy", type=str, default="masked-marginals", choices=["wt-marginals", "masked-marginals"], help="Scoring strategy")
     parser.add_argument('--model_name', type=str, default="aido_rna_1b600m")
+    parser.add_argument('--max_seq_len', type=int, default=1024)
     return parser
 
 
@@ -332,6 +334,7 @@ def main(args):
     model = MLM.from_config({"model.backbone": args.model_name})
     model = model.to(device=DEVICE)
     model.eval()
+    print(model)
 
     reference = pd.read_csv(args.reference_sequences)
     reference['PATH'] = reference['DMS_ID'].apply(lambda x: f"{args.dms_directory}/{x}.csv")

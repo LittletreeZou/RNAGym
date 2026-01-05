@@ -541,18 +541,19 @@ def save_assay_level_results_transposed(
 def main(args):
     wt_seqs = pd.read_csv(args.reference_file)
     model_list = [
-        "evo1",
-        "evo1.5",
-        "evo2",
-        "GenSLM",
-        "NT",
-        "rinalmo",
-        "RNAErnie",
-        "RNA-FM",
-        "aido_rna_1b600m_cds-wt-marginals",
-        "aido_rna_1b600m-wt-marginals",
-        "aido_rna_650m_cds-wt-marginals",
-        "aido_rna_650m-wt-marginals",
+        # "evo1",
+        # "evo1.5",
+        # "evo2",
+        # "GenSLM",
+        # "NT",
+        # "rinalmo",
+        # "RNAErnie",
+        # "RNA-FM",
+        # "aido_rna_1b600m_cds-wt-marginals",
+        # "aido_rna_1b600m-wt-marginals",
+        # "aido_rna_650m_cds-wt-marginals",
+        # "aido_rna_650m-wt-marginals",
+        "aido_rna_650m_cds_3096-wt-marginals",
     ]
     score_columns = [model + str("_score") for model in model_list]
     wt_seqs = analyze_datasets(wt_seqs, args.combined_dir, score_columns)

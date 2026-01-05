@@ -15,10 +15,11 @@ set -e
 # conda activate mgen
 export HF_HOME=/lustre/scratch/shared-folders/bio_project/shuxian/gbft/hf_home
 
-MODEL=aido_rna_650m      #$1
+MODEL=aido_rna_1b600m_cds_3096      #$1
 METHOD=wt-marginals      #masked-marginals
+MAX_LEN=3096
 
-echo "${MODEL} ${METHOD} ${DMS_IDX}"
+echo "${MODEL} ${METHOD} ${MAX_LEN} ${DMS_IDX}"
 
 WORK_DIR=/lustre/scratch/shared-folders/bio_project/shuxian/gbft/mg/rna_202507/RNAGym
 ref=${WORK_DIR}/fitness/reference_sheet_final.csv
@@ -35,12 +36,14 @@ if [ $METHOD == "masked-marginals" ]; then
         --dms_directory $dms \
         --output_directory $out\
         --scoring-strategy $METHOD \
-        --dms_idx $DMS_IDX
+        --dms_idx $DMS_IDX \
+        --max_seq_len $MAX_LEN
 else
     CUDA_VISIBLE_DEVICES=1 python compute_fitness.py  \
         --model_name $MODEL \
         --reference_sequences $ref \
         --dms_directory $dms \
         --output_directory $out\
-        --scoring-strategy $METHOD
+        --scoring-strategy $METHOD \
+        --max_seq_len $MAX_LEN
 fi

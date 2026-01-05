@@ -123,18 +123,19 @@ def main():
         model_list = ["PSSM", "EVmutation"]
     else:
         model_list = [
-            "evo1",
-            "evo1.5",
-            "evo2",
-            "GenSLM",
-            "NT",
-            "rinalmo",
-            "RNAErnie",
-            "RNA-FM",
-            "aido_rna_1b600m_cds-wt-marginals",
-            "aido_rna_1b600m-wt-marginals",
-            "aido_rna_650m_cds-wt-marginals",
-            "aido_rna_650m-wt-marginals",
+            # "evo1",
+            # "evo1.5",
+            # "evo2",
+            # "GenSLM",
+            # "NT",
+            # "rinalmo",
+            # "RNAErnie",
+            # "RNA-FM",
+            # "aido_rna_1b600m_cds-wt-marginals",
+            # "aido_rna_1b600m-wt-marginals",
+            # "aido_rna_650m_cds-wt-marginals",
+            # "aido_rna_650m-wt-marginals",
+            "aido_rna_650m_cds_3096-wt-marginals",
         ]
 
     score_cols_dict = {
@@ -152,6 +153,7 @@ def main():
         "aido_rna_1b600m-wt-marginals": "logit_scores",
         "aido_rna_650m_cds-wt-marginals": "logit_scores",
         "aido_rna_650m-wt-marginals": "logit_scores",
+        "aido_rna_650m_cds_3096-wt-marginals": "logit_scores",
     }
 
     combine_csv_data(
